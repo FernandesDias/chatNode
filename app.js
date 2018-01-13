@@ -1,6 +1,36 @@
 /* importar as configurações do servidor */
 var app = require('./config/server');
 /*parametreizar a porta de escuta*/
-app.listen(80, function(){
+var server = app.listen(80, function(){
     console.log('Servidor online');
+});
+
+var io = require('socket.io').listen(server);
+
+app.set('io', io);
+/* Criar a conexão por websocket */
+io.on('connection', function(socket){
+    console.log('Usuario conectou');
+    
+    socket.on('disconnect', function(){
+		console.log('Usuário desconectou');
+	});
+    
+    socket.on('msgParaservidor', function(data){
+        /* dialogo */
+        socket.emit('msgParaCliente',
+        {apelido: data.apelido, mensagem: data.mensagem});
+        
+        socket.broadcast.emit('msgParaCliente',
+        {apelido: data.apelido, mensagem: data.mensagem});
+
+        /* participantes */
+        if(parseInt(data.apelidoAtualizadoClientes) == 0){
+        socket.emit('participantesParaCliente',
+        {apelido: data.apelido});
+        
+        socket.broadcast.emit('participantesParaCliente',
+        {apelido: data.apelido});
+        }
+    }); 
 });
